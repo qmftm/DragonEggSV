@@ -1,0 +1,6 @@
+name: DEench
+version: '0.1.0'
+
+main: me.qmftm.dEench.DEench
+api-version: '1.21'
+load: POSTWORLD
