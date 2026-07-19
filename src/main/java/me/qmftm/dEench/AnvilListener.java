@@ -1,7 +1,6 @@
 package me.qmftm.dEench;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,8 +8,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,16 +20,21 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class AnvilListener implements Listener {
 
-    private static final Map<Enchantment, Integer> CUSTOM_MAX = new HashMap<>();
     private static final String[] ROMAN = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
 
-    static {
-        CUSTOM_MAX.put(Registry.ENCHANTMENT.get(NamespacedKey.minecraft("sharpness")), 10);
-        CUSTOM_MAX.put(Registry.ENCHANTMENT.get(NamespacedKey.minecraft("protection")), 7);
+    private final DEench plugin;
+
+    public AnvilListener(DEench plugin) {
+        this.plugin = plugin;
+    }
+
+    private Map<Enchantment, Integer> customMax() {
+        return plugin.getOverenchMax();
     }
 
     @EventHandler
     public void onPrepareAnvil(PrepareAnvilEvent event) {
+        Map<Enchantment, Integer> customMax = customMax();
         AnvilInventory anvil = event.getInventory();
         ItemStack left = anvil.getItem(0);
         ItemStack right = anvil.getItem(1);
@@ -51,13 +53,13 @@ public class AnvilListener implements Listener {
         // maximum, cancel the combine entirely.
         for (Map.Entry<Enchantment, Integer> entry : rightEnchs.entrySet()) {
             Enchantment ench = entry.getKey();
-            if (!CUSTOM_MAX.containsKey(ench)) {
+            if (!customMax.containsKey(ench)) {
                 continue;
             }
             if (!leftIsBook && !ench.canEnchantItem(left)) {
                 continue;
             }
-            if (getEnchantLevel(left, ench) < CUSTOM_MAX.get(ench)) {
+            if (getEnchantLevel(left, ench) < customMax.get(ench)) {
                 continue;
             }
             event.setResult(null);
@@ -69,19 +71,19 @@ public class AnvilListener implements Listener {
 
         for (Map.Entry<Enchantment, Integer> entry : rightEnchs.entrySet()) {
             Enchantment ench = entry.getKey();
-            if (!CUSTOM_MAX.containsKey(ench)) {
+            if (!customMax.containsKey(ench)) {
                 continue;
             }
             if (!leftIsBook && !ench.canEnchantItem(left)) {
                 continue;
             }
 
-            int customMax = CUSTOM_MAX.get(ench);
+            int max = customMax.get(ench);
             int leftLevel = getEnchantLevel(left, ench);
             int rightLevel = entry.getValue();
 
             int newLevel = leftLevel == rightLevel ? leftLevel + 1 : Math.max(leftLevel, rightLevel);
-            newLevel = Math.min(newLevel, customMax);
+            newLevel = Math.min(newLevel, max);
 
             int currentLevel = getEnchantLevel(result, ench);
             if (newLevel <= currentLevel) {

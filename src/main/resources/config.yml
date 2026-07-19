@@ -1,0 +1,11 @@
+# DEench configuration
+#
+# overench: custom maximum enchantment levels applied when combining items
+# in an anvil. Each value must be greater than or equal to the enchantment's
+# vanilla maximum level.
+#
+# Change these in-game with:
+#   /DE config overench <enchant> <level>
+overench:
+  sharpness: 10
+  protection: 7

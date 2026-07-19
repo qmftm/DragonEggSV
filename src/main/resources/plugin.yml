@@ -4,3 +4,14 @@ version: '0.1.0'
 main: me.qmftm.dEench.DEench
 api-version: '1.21'
 load: POSTWORLD
+
+commands:
+  DE:
+    description: DEench administration commands.
+    usage: /DE config overench <enchant> <level>
+    permission: deench.admin
+
+permissions:
+  deench.admin:
+    description: Allows configuring DEench.
+    default: op
