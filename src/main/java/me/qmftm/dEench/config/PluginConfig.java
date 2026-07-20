@@ -46,4 +46,20 @@ public class PluginConfig {
     public int villagerTradesPerDay() {
         return plugin.getConfig().getInt("egg.villager-trades-per-day", 20);
     }
+
+    public double explosionDamageMultiplier() {
+        return plugin.getConfig().getDouble("explosion-damage-multiplier", 0.25);
+    }
+
+    public int goldenAppleRegenSeconds() {
+        return plugin.getConfig().getInt("golden-apple.regen-seconds", 2);
+    }
+
+    public int maxPotions() {
+        return plugin.getConfig().getInt("potions.max-carry", 2);
+    }
+
+    public int dragonRespawnXp() {
+        return plugin.getConfig().getInt("dragon-respawn-xp", 5000);
+    }
 }

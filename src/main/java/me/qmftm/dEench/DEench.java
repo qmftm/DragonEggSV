@@ -16,6 +16,10 @@ import me.qmftm.dEench.egg.VillagerTradeLimiter;
 import me.qmftm.dEench.game.GameClock;
 import me.qmftm.dEench.game.WorldBorderService;
 import me.qmftm.dEench.game.WorldRulesService;
+import me.qmftm.dEench.items.GoldenAppleTweak;
+import me.qmftm.dEench.items.PotionCarryLimiter;
+import me.qmftm.dEench.rules.EndPortalListener;
+import me.qmftm.dEench.rules.ExplosionDamageListener;
 import me.qmftm.dEench.rules.InfoLeakListener;
 import me.qmftm.dEench.rules.XpDropListener;
 import org.bukkit.NamespacedKey;
@@ -55,6 +59,10 @@ public final class DEench extends JavaPlugin {
         pm.registerEvents(new VillagerTradeLimiter(eggManager, config), this);
         pm.registerEvents(new XpDropListener(), this);
         pm.registerEvents(new InfoLeakListener(), this);
+        pm.registerEvents(new ExplosionDamageListener(config), this);
+        pm.registerEvents(new GoldenAppleTweak(this, config), this);
+        pm.registerEvents(new PotionCarryLimiter(config), this);
+        pm.registerEvents(new EndPortalListener(), this);
 
         WorldRulesService worldRules = new WorldRulesService();
         pm.registerEvents(worldRules, this);

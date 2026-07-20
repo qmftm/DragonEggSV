@@ -24,3 +24,11 @@ egg:
   footprint-interval-seconds: 2
   altar-beacon-minutes: 100
   villager-trades-per-day: 20
+
+# Environment / item rules.
+explosion-damage-multiplier: 0.25   # beds / respawn anchors / end crystals
+golden-apple:
+  regen-seconds: 2
+potions:
+  max-carry: 2
+dragon-respawn-xp: 5000
