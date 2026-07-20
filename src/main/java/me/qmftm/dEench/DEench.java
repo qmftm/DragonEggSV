@@ -16,7 +16,12 @@ import me.qmftm.dEench.egg.VillagerTradeLimiter;
 import me.qmftm.dEench.game.GameClock;
 import me.qmftm.dEench.game.WorldBorderService;
 import me.qmftm.dEench.game.WorldRulesService;
+import me.qmftm.dEench.items.BannedEnchantListener;
+import me.qmftm.dEench.items.BannedItemListener;
+import me.qmftm.dEench.items.DragonRespawnXp;
 import me.qmftm.dEench.items.GoldenAppleTweak;
+import me.qmftm.dEench.items.MaxEnchantNameService;
+import me.qmftm.dEench.items.NetheriteTemplateRecipe;
 import me.qmftm.dEench.items.PotionCarryLimiter;
 import me.qmftm.dEench.rules.EndPortalListener;
 import me.qmftm.dEench.rules.ExplosionDamageListener;
@@ -63,15 +68,20 @@ public final class DEench extends JavaPlugin {
         pm.registerEvents(new GoldenAppleTweak(this, config), this);
         pm.registerEvents(new PotionCarryLimiter(config), this);
         pm.registerEvents(new EndPortalListener(), this);
+        pm.registerEvents(new BannedItemListener(), this);
+        pm.registerEvents(new BannedEnchantListener(config.bannedEnchants()), this);
+        pm.registerEvents(new DragonRespawnXp(config), this);
 
         WorldRulesService worldRules = new WorldRulesService();
         pm.registerEvents(worldRules, this);
         worldRules.applyAll();
         new WorldBorderService(config).applyAll();
+        NetheriteTemplateRecipe.register(this);
 
         eggManager.start();
         new EnderEffectService(this, eggManager).start();
         new BeaconAmbienceService(this, eggManager).start();
+        new MaxEnchantNameService(this, overenchMax).start();
         footprintService.start();
         gameClock.start();
 

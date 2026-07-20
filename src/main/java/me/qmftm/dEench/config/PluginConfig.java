@@ -1,5 +1,9 @@
 package me.qmftm.dEench.config;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 import me.qmftm.dEench.DEench;
 import org.bukkit.World;
 
@@ -61,5 +65,13 @@ public class PluginConfig {
 
     public int dragonRespawnXp() {
         return plugin.getConfig().getInt("dragon-respawn-xp", 5000);
+    }
+
+    public Set<String> bannedEnchants() {
+        List<String> list = plugin.getConfig().getStringList("banned-enchants");
+        if (list.isEmpty()) {
+            list = List.of("mending", "infinity");
+        }
+        return new LinkedHashSet<>(list);
     }
 }

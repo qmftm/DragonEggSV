@@ -32,3 +32,8 @@ golden-apple:
 potions:
   max-carry: 2
 dragon-respawn-xp: 5000
+
+# Enchantments that can no longer be newly acquired (table/anvil/trades).
+banned-enchants:
+  - mending
+  - infinity
