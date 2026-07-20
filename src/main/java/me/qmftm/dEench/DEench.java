@@ -5,10 +5,14 @@ import java.util.Map;
 
 import me.qmftm.dEench.config.PluginConfig;
 import me.qmftm.dEench.data.DataStore;
+import me.qmftm.dEench.egg.BeaconAmbienceService;
+import me.qmftm.dEench.egg.DeathAltarService;
 import me.qmftm.dEench.egg.DimensionLockListener;
+import me.qmftm.dEench.egg.EggBlockListener;
 import me.qmftm.dEench.egg.EggManager;
 import me.qmftm.dEench.egg.EnderEffectService;
 import me.qmftm.dEench.egg.FootprintService;
+import me.qmftm.dEench.egg.VillagerTradeLimiter;
 import me.qmftm.dEench.game.GameClock;
 import me.qmftm.dEench.game.WorldBorderService;
 import me.qmftm.dEench.game.WorldRulesService;
@@ -46,6 +50,9 @@ public final class DEench extends JavaPlugin {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new AnvilListener(this), this);
         pm.registerEvents(new DimensionLockListener(eggManager), this);
+        pm.registerEvents(new EggBlockListener(eggManager), this);
+        pm.registerEvents(new DeathAltarService(this, eggManager, config), this);
+        pm.registerEvents(new VillagerTradeLimiter(eggManager, config), this);
         pm.registerEvents(new XpDropListener(), this);
         pm.registerEvents(new InfoLeakListener(), this);
 
@@ -56,6 +63,7 @@ public final class DEench extends JavaPlugin {
 
         eggManager.start();
         new EnderEffectService(this, eggManager).start();
+        new BeaconAmbienceService(this, eggManager).start();
         footprintService.start();
         gameClock.start();
 

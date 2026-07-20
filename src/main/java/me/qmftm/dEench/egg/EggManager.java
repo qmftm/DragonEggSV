@@ -5,6 +5,7 @@ import java.util.UUID;
 import me.qmftm.dEench.DEench;
 import me.qmftm.dEench.data.DataStore;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -21,6 +22,7 @@ public class EggManager {
     private final DataStore data;
 
     private UUID holder;
+    private Location placedEgg;
 
     public EggManager(DEench plugin, DataStore data) {
         this.plugin = plugin;
@@ -64,5 +66,24 @@ public class EggManager {
     public boolean isFirstHolder(Player player) {
         UUID first = data.getFirstHolder();
         return first != null && first.equals(player.getUniqueId());
+    }
+
+    /** Location of the most recently known placed dragon egg block, or {@code null}. */
+    public Location getPlacedEgg() {
+        return placedEgg;
+    }
+
+    public void setPlacedEgg(Location location) {
+        this.placedEgg = location;
+    }
+
+    public void clearPlacedEggAt(Location location) {
+        if (placedEgg != null && location != null
+                && placedEgg.getWorld() != null && placedEgg.getWorld().equals(location.getWorld())
+                && placedEgg.getBlockX() == location.getBlockX()
+                && placedEgg.getBlockY() == location.getBlockY()
+                && placedEgg.getBlockZ() == location.getBlockZ()) {
+            placedEgg = null;
+        }
     }
 }

@@ -22,3 +22,5 @@ worldborder:
 egg:
   footprint-days: 5
   footprint-interval-seconds: 2
+  altar-beacon-minutes: 100
+  villager-trades-per-day: 20

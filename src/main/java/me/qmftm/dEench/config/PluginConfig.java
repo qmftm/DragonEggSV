@@ -38,4 +38,12 @@ public class PluginConfig {
     public int footprintIntervalSeconds() {
         return plugin.getConfig().getInt("egg.footprint-interval-seconds", 2);
     }
+
+    public int altarBeaconMinutes() {
+        return plugin.getConfig().getInt("egg.altar-beacon-minutes", 100);
+    }
+
+    public int villagerTradesPerDay() {
+        return plugin.getConfig().getInt("egg.villager-trades-per-day", 20);
+    }
 }
