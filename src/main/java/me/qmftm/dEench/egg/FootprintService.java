@@ -11,11 +11,13 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -24,6 +26,10 @@ import org.joml.Vector3f;
  * Leaves a trail of {@code ^} text-display footprints beneath the egg holder,
  * each oriented toward the direction the holder is facing. Footprints last
  * 5 MC-days and are hidden at night.
+ *
+ * <p>Footprints are persisted as real display entities: each stores its spawn
+ * time in its PDC, and on startup any surviving footprints are re-adopted so
+ * their lifetime carries across restarts.
  */
 public class FootprintService {
 
@@ -34,17 +40,18 @@ public class FootprintService {
     private final DEench plugin;
     private final EggManager eggManager;
     private final PluginConfig config;
+    private final NamespacedKey spawnKey;
     private final List<Footprint> footprints = new ArrayList<>();
 
     public FootprintService(DEench plugin, EggManager eggManager, PluginConfig config) {
         this.plugin = plugin;
         this.eggManager = eggManager;
         this.config = config;
+        this.spawnKey = new NamespacedKey(plugin, "footprint_spawn");
     }
 
     public void start() {
-        // Clean up any footprints orphaned by a previous run/crash.
-        removeTaggedEntities();
+        adoptExisting();
 
         long interval = Math.max(1L, config.footprintIntervalSeconds()) * 20L;
         Bukkit.getScheduler().runTaskTimer(plugin, this::stamp, interval, interval);
@@ -52,13 +59,21 @@ public class FootprintService {
     }
 
     public void shutdown() {
-        for (Footprint footprint : footprints) {
-            if (footprint.display.isValid()) {
-                footprint.display.remove();
+        // Leave the display entities in the world; they persist and are
+        // re-adopted on the next start.
+        footprints.clear();
+    }
+
+    /** Re-adopt footprints saved in loaded chunks from a previous run. */
+    private void adoptExisting() {
+        for (World world : Bukkit.getWorlds()) {
+            for (Entity entity : world.getEntities()) {
+                if (entity instanceof TextDisplay display && display.getScoreboardTags().contains(TAG)) {
+                    Long spawn = display.getPersistentDataContainer().get(spawnKey, PersistentDataType.LONG);
+                    footprints.add(new Footprint(display, spawn != null ? spawn : world.getFullTime()));
+                }
             }
         }
-        footprints.clear();
-        removeTaggedEntities();
     }
 
     private void stamp() {
@@ -70,6 +85,7 @@ public class FootprintService {
         Location at = holder.getLocation();
         World world = at.getWorld();
         float yaw = at.getYaw();
+        long spawnFullTime = world.getFullTime();
         Location loc = new Location(world, at.getX(), at.getY() + 0.05, at.getZ(), 0f, 0f);
 
         TextDisplay display = world.spawn(loc, TextDisplay.class, td -> {
@@ -77,6 +93,8 @@ public class FootprintService {
             td.setBillboard(Display.Billboard.FIXED);
             td.setViewRange(VISIBLE_RANGE);
             td.addScoreboardTag(TAG);
+            td.setPersistent(true);
+            td.getPersistentDataContainer().set(spawnKey, PersistentDataType.LONG, spawnFullTime);
             // Lay the text flat on the ground (rotate about X) and turn the
             // caret to point where the holder is looking (rotate about Y).
             Quaternionf left = new Quaternionf()
@@ -86,7 +104,7 @@ public class FootprintService {
                     new Vector3f(), left, new Vector3f(1f, 1f, 1f), new Quaternionf()));
         });
 
-        footprints.add(new Footprint(display, world.getFullTime()));
+        footprints.add(new Footprint(display, spawnFullTime));
     }
 
     private void maintain() {
@@ -106,16 +124,6 @@ public class FootprintService {
                 continue;
             }
             display.setViewRange(Worlds.isNight(world) ? HIDDEN_RANGE : VISIBLE_RANGE);
-        }
-    }
-
-    private void removeTaggedEntities() {
-        for (World world : Bukkit.getWorlds()) {
-            for (Entity entity : world.getEntities()) {
-                if (entity.getScoreboardTags().contains(TAG)) {
-                    entity.remove();
-                }
-            }
         }
     }
 
