@@ -60,7 +60,8 @@ public final class DEench extends JavaPlugin {
         pm.registerEvents(new AnvilListener(this), this);
         pm.registerEvents(new DimensionLockListener(eggManager), this);
         pm.registerEvents(new EggBlockListener(eggManager), this);
-        pm.registerEvents(new DeathAltarService(this, eggManager, config), this);
+        DeathAltarService deathAltarService = new DeathAltarService(this, eggManager, config);
+        pm.registerEvents(deathAltarService, this);
         pm.registerEvents(new VillagerTradeLimiter(eggManager, config), this);
         pm.registerEvents(new XpDropListener(), this);
         pm.registerEvents(new InfoLeakListener(), this);
@@ -84,6 +85,7 @@ public final class DEench extends JavaPlugin {
         bannedEnchants.start();
 
         eggManager.start();
+        deathAltarService.start();
         new EnderEffectService(this, eggManager).start();
         new BeaconAmbienceService(this, eggManager).start();
         new MaxEnchantNameService(this, overenchMax).start();
