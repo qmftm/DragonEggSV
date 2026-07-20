@@ -1,11 +1,24 @@
-# DEench configuration
-#
-# overench: custom maximum enchantment levels applied when combining items
-# in an anvil. Each value must be greater than or equal to the enchantment's
-# vanilla maximum level.
-#
-# Change these in-game with:
-#   /DE config overench <enchant> <level>
+# DEench / DragonEggSV configuration
+
+# Custom maximum enchantment levels applied when combining items in an anvil.
+# Each value must be >= the enchantment's vanilla maximum level.
+# Change these in-game with: /DE config overench <enchant> <level>
 overench:
   sharpness: 10
   protection: 7
+
+# Game progression. One "day" is one Minecraft day (24000 ticks).
+# The winner is decided the moment day (days-to-win + 1) begins.
+game:
+  days-to-win: 99
+
+# Per-dimension world border sizes (diameter in blocks).
+worldborder:
+  overworld: 1000
+  nether: 500
+  end: 400
+
+# Dragon egg holder penalties.
+egg:
+  footprint-days: 5
+  footprint-interval-seconds: 2

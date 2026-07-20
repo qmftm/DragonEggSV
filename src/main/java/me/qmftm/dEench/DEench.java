@@ -3,23 +3,61 @@ package me.qmftm.dEench;
 import java.util.HashMap;
 import java.util.Map;
 
+import me.qmftm.dEench.config.PluginConfig;
+import me.qmftm.dEench.data.DataStore;
+import me.qmftm.dEench.egg.DimensionLockListener;
+import me.qmftm.dEench.egg.EggManager;
+import me.qmftm.dEench.egg.EnderEffectService;
+import me.qmftm.dEench.egg.FootprintService;
+import me.qmftm.dEench.game.GameClock;
+import me.qmftm.dEench.game.WorldBorderService;
+import me.qmftm.dEench.game.WorldRulesService;
+import me.qmftm.dEench.rules.InfoLeakListener;
+import me.qmftm.dEench.rules.XpDropListener;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class DEench extends JavaPlugin {
 
     private final Map<Enchantment, Integer> overenchMax = new HashMap<>();
 
+    private DataStore dataStore;
+    private FootprintService footprintService;
+    private GameClock gameClock;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
         loadOverench();
 
-        getServer().getPluginManager().registerEvents(new AnvilListener(this), this);
+        dataStore = new DataStore(this);
+        dataStore.load();
+        PluginConfig config = new PluginConfig(this);
+
+        EggManager eggManager = new EggManager(this, dataStore);
+        footprintService = new FootprintService(this, eggManager, config);
+        gameClock = new GameClock(this, dataStore, config, eggManager);
+
+        PluginManager pm = getServer().getPluginManager();
+        pm.registerEvents(new AnvilListener(this), this);
+        pm.registerEvents(new DimensionLockListener(eggManager), this);
+        pm.registerEvents(new XpDropListener(), this);
+        pm.registerEvents(new InfoLeakListener(), this);
+
+        WorldRulesService worldRules = new WorldRulesService();
+        pm.registerEvents(worldRules, this);
+        worldRules.applyAll();
+        new WorldBorderService(config).applyAll();
+
+        eggManager.start();
+        new EnderEffectService(this, eggManager).start();
+        footprintService.start();
+        gameClock.start();
 
         PluginCommand command = getCommand("DE");
         if (command != null) {
@@ -31,6 +69,15 @@ public final class DEench extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (footprintService != null) {
+            footprintService.shutdown();
+        }
+        if (gameClock != null) {
+            gameClock.shutdown();
+        }
+        if (dataStore != null) {
+            dataStore.save();
+        }
     }
 
     /**
