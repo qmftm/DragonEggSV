@@ -26,6 +26,10 @@ public class DECommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length >= 1 && args[0].equalsIgnoreCase("start")) {
+            return handleStart(sender, label, args);
+        }
+
         if (args.length < 2 || !args[0].equalsIgnoreCase("config") || !args[1].equalsIgnoreCase("overench")) {
             sendUsage(sender, label);
             return true;
@@ -66,15 +70,37 @@ public class DECommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleStart(CommandSender sender, String label, String[] args) {
+        int startDay = 1;
+        if (args.length >= 2) {
+            try {
+                startDay = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                sender.sendMessage(Component.text("Start day must be a whole number: " + args[1], NamedTextColor.RED));
+                return true;
+            }
+            if (startDay < 1) {
+                sender.sendMessage(Component.text("Start day must be at least 1.", NamedTextColor.RED));
+                return true;
+            }
+        }
+
+        plugin.getGameClock().startGame(startDay);
+        sender.sendMessage(Component.text(
+                "DragonEggSV started at day " + startDay + ".", NamedTextColor.GREEN));
+        return true;
+    }
+
     private void sendUsage(CommandSender sender, String label) {
         sender.sendMessage(Component.text(
-                "Usage: /" + label + " config overench <enchant> <level>", NamedTextColor.YELLOW));
+                "Usage: /" + label + " start [day]  |  /" + label + " config overench <enchant> <level>",
+                NamedTextColor.YELLOW));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return filter(List.of("config"), args[0]);
+            return filter(List.of("config", "start"), args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("config")) {
             return filter(List.of("overench"), args[1]);

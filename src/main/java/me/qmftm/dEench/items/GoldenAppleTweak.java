@@ -26,7 +26,8 @@ public class GoldenAppleTweak implements Listener {
 
     @EventHandler
     public void onConsume(PlayerItemConsumeEvent event) {
-        if (event.getItem().getType() != Material.GOLDEN_APPLE) {
+        Material type = event.getItem().getType();
+        if (type != Material.GOLDEN_APPLE && type != Material.ENCHANTED_GOLDEN_APPLE) {
             return;
         }
         Player player = event.getPlayer();

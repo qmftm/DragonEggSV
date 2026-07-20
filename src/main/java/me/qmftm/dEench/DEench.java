@@ -68,15 +68,20 @@ public final class DEench extends JavaPlugin {
         pm.registerEvents(new GoldenAppleTweak(this, config), this);
         pm.registerEvents(new PotionCarryLimiter(config), this);
         pm.registerEvents(new EndPortalListener(), this);
-        pm.registerEvents(new BannedItemListener(), this);
-        pm.registerEvents(new BannedEnchantListener(config.bannedEnchants()), this);
+        BannedItemListener bannedItems = new BannedItemListener(this);
+        pm.registerEvents(bannedItems, this);
+        BannedEnchantListener bannedEnchants = new BannedEnchantListener(this, config.bannedEnchants());
+        pm.registerEvents(bannedEnchants, this);
         pm.registerEvents(new DragonRespawnXp(config), this);
+        pm.registerEvents(new NetheriteTemplateRecipe(this), this);
 
         WorldRulesService worldRules = new WorldRulesService();
         pm.registerEvents(worldRules, this);
         worldRules.applyAll();
         new WorldBorderService(config).applyAll();
-        NetheriteTemplateRecipe.register(this);
+
+        bannedItems.start();
+        bannedEnchants.start();
 
         eggManager.start();
         new EnderEffectService(this, eggManager).start();
@@ -91,6 +96,10 @@ public final class DEench extends JavaPlugin {
             command.setExecutor(executor);
             command.setTabCompleter(executor);
         }
+    }
+
+    public GameClock getGameClock() {
+        return gameClock;
     }
 
     @Override

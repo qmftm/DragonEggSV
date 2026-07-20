@@ -13,8 +13,10 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 /**
- * Tracks elapsed MC days from a fixed start point, drives the date boss bar,
- * and declares the winner once the target day is reached.
+ * Tracks elapsed MC days from an explicit start point ({@code /DE start}),
+ * drives the date boss bar, and declares the winner on the final day. If no one
+ * holds the egg on the final day, the win is deferred: the next player to
+ * obtain the egg wins immediately.
  */
 public class GameClock {
 
@@ -35,7 +37,7 @@ public class GameClock {
     }
 
     public void start() {
-        bossBar = BossBar.bossBar(Component.text("Day 1"), 0f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
+        bossBar = BossBar.bossBar(Component.text("DragonEggSV"), 0f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L);
     }
 
@@ -48,50 +50,70 @@ public class GameClock {
         }
     }
 
+    /**
+     * Starts (or restarts) the game, counting from the given day number.
+     */
+    public void startGame(int startDay) {
+        World overworld = Worlds.overworld();
+        long full = overworld == null ? 0L : overworld.getFullTime();
+        data.setStarted(true);
+        data.setStartFullTime(full);
+        data.setStartDay(startDay);
+        data.setWinDeclared(false);
+        data.setWinDeferAnnounced(false);
+        data.save();
+
+        Bukkit.getServer().sendMessage(Component.text(
+                "🥚 DragonEggSV has begun — Day " + startDay + "!", NamedTextColor.LIGHT_PURPLE));
+    }
+
     private void tick() {
+        if (!data.isStarted()) {
+            showToAll(Component.text("DragonEggSV — /DE start 로 시작", NamedTextColor.GRAY), 0f);
+            return;
+        }
+
         World overworld = Worlds.overworld();
         if (overworld == null) {
             return;
         }
 
-        long full = overworld.getFullTime();
-        long start = data.getStartFullTime();
-        if (start < 0) {
-            start = full;
-            data.setStartFullTime(start);
-            data.save();
-        }
-
-        long elapsed = Math.max(0L, full - start);
-        int day = (int) (elapsed / TICKS_PER_DAY) + 1;
+        long elapsed = Math.max(0L, overworld.getFullTime() - data.getStartFullTime());
+        int day = (int) (elapsed / TICKS_PER_DAY) + data.getStartDay();
         int winDay = config.winDay();
         float progress = clamp01((elapsed % TICKS_PER_DAY) / (float) TICKS_PER_DAY);
 
-        bossBar.name(Component.text("🥚 Day " + day + " / " + winDay, NamedTextColor.LIGHT_PURPLE));
+        showToAll(Component.text("🥚 Day " + day + " / " + winDay, NamedTextColor.LIGHT_PURPLE), progress);
+
+        if (!data.isWinDeclared() && day >= winDay) {
+            resolveWin();
+        }
+    }
+
+    private void resolveWin() {
+        Player holder = eggManager.getHolder();
+        if (holder != null) {
+            data.setWinDeclared(true);
+            data.save();
+            Bukkit.getServer().sendMessage(Component.text(
+                    "🐉 " + holder.getName() + " wins DragonEggSV — they hold the dragon egg!",
+                    NamedTextColor.GOLD));
+        } else if (!data.isWinDeferAnnounced()) {
+            data.setWinDeferAnnounced(true);
+            data.save();
+            Bukkit.getServer().sendMessage(Component.text(
+                    "🐉 The final day has arrived, but no one holds the dragon egg. "
+                            + "The next player to obtain it wins!",
+                    NamedTextColor.GOLD));
+        }
+    }
+
+    private void showToAll(Component name, float progress) {
+        bossBar.name(name);
         bossBar.progress(progress);
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.showBossBar(bossBar);
         }
-
-        if (day >= winDay && !data.isWinDeclared()) {
-            declareWin();
-        }
-    }
-
-    private void declareWin() {
-        data.setWinDeclared(true);
-        data.save();
-
-        Player holder = eggManager.getHolder();
-        Component message;
-        if (holder != null) {
-            message = Component.text("🐉 " + holder.getName() + " wins DragonEggSV — they hold the dragon egg on the final day!",
-                    NamedTextColor.GOLD);
-        } else {
-            message = Component.text("🐉 The final day has arrived, but no player is currently holding the dragon egg.",
-                    NamedTextColor.GOLD);
-        }
-        Bukkit.getServer().sendMessage(message);
     }
 
     private static float clamp01(float value) {

@@ -66,4 +66,29 @@ public class DataStore {
     public void setWinDeclared(boolean declared) {
         cfg.set("game.win-declared", declared);
     }
+
+    public boolean isStarted() {
+        return cfg.getBoolean("game.started", false);
+    }
+
+    public void setStarted(boolean started) {
+        cfg.set("game.started", started);
+    }
+
+    /** The day number the game is considered to begin at (default 1). */
+    public int getStartDay() {
+        return cfg.getInt("game.start-day", 1);
+    }
+
+    public void setStartDay(int day) {
+        cfg.set("game.start-day", day);
+    }
+
+    public boolean isWinDeferAnnounced() {
+        return cfg.getBoolean("game.win-defer-announced", false);
+    }
+
+    public void setWinDeferAnnounced(boolean announced) {
+        cfg.set("game.win-defer-announced", announced);
+    }
 }
