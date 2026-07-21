@@ -91,4 +91,21 @@ public class DataStore {
     public void setWinDeferAnnounced(boolean announced) {
         cfg.set("game.win-defer-announced", announced);
     }
+
+    public boolean isPaused() {
+        return cfg.getBoolean("game.paused", false);
+    }
+
+    public void setPaused(boolean paused) {
+        cfg.set("game.paused", paused);
+    }
+
+    /** Elapsed game ticks frozen at the moment of pausing. */
+    public long getPausedElapsed() {
+        return cfg.getLong("game.paused-elapsed", 0L);
+    }
+
+    public void setPausedElapsed(long elapsed) {
+        cfg.set("game.paused-elapsed", elapsed);
+    }
 }

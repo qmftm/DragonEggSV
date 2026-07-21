@@ -9,6 +9,7 @@ import me.qmftm.dEench.egg.BeaconAmbienceService;
 import me.qmftm.dEench.egg.DeathAltarService;
 import me.qmftm.dEench.egg.DimensionLockListener;
 import me.qmftm.dEench.egg.EggBlockListener;
+import me.qmftm.dEench.egg.EggContainmentListener;
 import me.qmftm.dEench.egg.EggManager;
 import me.qmftm.dEench.egg.EnderEffectService;
 import me.qmftm.dEench.egg.FootprintService;
@@ -40,6 +41,7 @@ public final class DEench extends JavaPlugin {
     private final Map<Enchantment, Integer> overenchMax = new HashMap<>();
 
     private DataStore dataStore;
+    private EggManager eggManager;
     private FootprintService footprintService;
     private GameClock gameClock;
 
@@ -52,7 +54,7 @@ public final class DEench extends JavaPlugin {
         dataStore.load();
         PluginConfig config = new PluginConfig(this);
 
-        EggManager eggManager = new EggManager(this, dataStore);
+        eggManager = new EggManager(this, dataStore);
         footprintService = new FootprintService(this, eggManager, config);
         gameClock = new GameClock(this, dataStore, config, eggManager);
 
@@ -60,6 +62,7 @@ public final class DEench extends JavaPlugin {
         pm.registerEvents(new AnvilListener(this), this);
         pm.registerEvents(new DimensionLockListener(eggManager), this);
         pm.registerEvents(new EggBlockListener(eggManager), this);
+        pm.registerEvents(new EggContainmentListener(), this);
         DeathAltarService deathAltarService = new DeathAltarService(this, eggManager, config);
         pm.registerEvents(deathAltarService, this);
         pm.registerEvents(new VillagerTradeLimiter(eggManager, config), this);
@@ -102,6 +105,10 @@ public final class DEench extends JavaPlugin {
 
     public GameClock getGameClock() {
         return gameClock;
+    }
+
+    public EggManager getEggManager() {
+        return eggManager;
     }
 
     @Override

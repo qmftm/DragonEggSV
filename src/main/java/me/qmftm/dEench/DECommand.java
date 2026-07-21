@@ -29,6 +29,12 @@ public class DECommand implements CommandExecutor, TabCompleter {
         if (args.length >= 1 && args[0].equalsIgnoreCase("start")) {
             return handleStart(sender, label, args);
         }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("status")) {
+            return handleStatus(sender);
+        }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("pause")) {
+            return handlePause(sender);
+        }
 
         if (args.length < 2 || !args[0].equalsIgnoreCase("config") || !args[1].equalsIgnoreCase("overench")) {
             sendUsage(sender, label);
@@ -91,16 +97,57 @@ public class DECommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleStatus(CommandSender sender) {
+        me.qmftm.dEench.game.GameClock clock = plugin.getGameClock();
+        me.qmftm.dEench.egg.EggManager egg = plugin.getEggManager();
+
+        sender.sendMessage(Component.text("=== DragonEggSV ===", NamedTextColor.GOLD));
+        if (!clock.isStarted()) {
+            sender.sendMessage(Component.text("게임 상태: 시작 전 (/DE start 로 시작)", NamedTextColor.GRAY));
+        } else {
+            String state = clock.isWinDeclared() ? "종료(우승 확정)" : (clock.isPaused() ? "일시정지" : "진행 중");
+            sender.sendMessage(Component.text("게임 상태: " + state, NamedTextColor.YELLOW));
+            sender.sendMessage(Component.text(
+                    "날짜: Day " + clock.currentDay() + " / " + clock.getWinDay(), NamedTextColor.YELLOW));
+        }
+
+        org.bukkit.entity.Player holder = egg.getHolder();
+        sender.sendMessage(Component.text(
+                "현재 알 보유자: " + (holder != null ? holder.getName() : "없음"), NamedTextColor.YELLOW));
+
+        java.util.UUID first = egg.getFirstHolder();
+        String firstName = first == null ? "없음" : org.bukkit.Bukkit.getOfflinePlayer(first).getName();
+        sender.sendMessage(Component.text("최초 획득자: " + (firstName == null ? "알 수 없음" : firstName),
+                NamedTextColor.YELLOW));
+        return true;
+    }
+
+    private boolean handlePause(CommandSender sender) {
+        me.qmftm.dEench.game.GameClock clock = plugin.getGameClock();
+        if (!clock.isStarted()) {
+            sender.sendMessage(Component.text("게임이 아직 시작되지 않았습니다.", NamedTextColor.RED));
+            return true;
+        }
+        if (clock.isPaused()) {
+            clock.resume();
+            sender.sendMessage(Component.text("게임을 재개했습니다.", NamedTextColor.GREEN));
+        } else {
+            clock.pause();
+            sender.sendMessage(Component.text("게임을 일시정지했습니다. (/DE pause 로 재개)", NamedTextColor.GREEN));
+        }
+        return true;
+    }
+
     private void sendUsage(CommandSender sender, String label) {
         sender.sendMessage(Component.text(
-                "Usage: /" + label + " start [day]  |  /" + label + " config overench <enchant> <level>",
+                "Usage: /" + label + " start [day] | status | pause | config overench <enchant> <level>",
                 NamedTextColor.YELLOW));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return filter(List.of("config", "start"), args[0]);
+            return filter(List.of("config", "start", "status", "pause"), args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("config")) {
             return filter(List.of("overench"), args[1]);

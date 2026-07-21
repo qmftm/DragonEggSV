@@ -59,6 +59,8 @@ public class GameClock {
         data.setStarted(true);
         data.setStartFullTime(full);
         data.setStartDay(startDay);
+        data.setPaused(false);
+        data.setPausedElapsed(0L);
         data.setWinDeclared(false);
         data.setWinDeferAnnounced(false);
         data.save();
@@ -67,25 +69,77 @@ public class GameClock {
                 "🥚 DragonEggSV has begun — Day " + startDay + "!", NamedTextColor.LIGHT_PURPLE));
     }
 
+    /** Freezes the day counter. Returns false if not running or already paused. */
+    public boolean pause() {
+        if (!data.isStarted() || data.isPaused()) {
+            return false;
+        }
+        data.setPausedElapsed(elapsedNow());
+        data.setPaused(true);
+        data.save();
+        return true;
+    }
+
+    /** Resumes the day counter. Returns false if not paused. */
+    public boolean resume() {
+        if (!data.isStarted() || !data.isPaused()) {
+            return false;
+        }
+        World overworld = Worlds.overworld();
+        long full = overworld == null ? data.getStartFullTime() : overworld.getFullTime();
+        data.setStartFullTime(full - data.getPausedElapsed());
+        data.setPaused(false);
+        data.save();
+        return true;
+    }
+
+    public boolean isStarted() {
+        return data.isStarted();
+    }
+
+    public boolean isPaused() {
+        return data.isPaused();
+    }
+
+    public boolean isWinDeclared() {
+        return data.isWinDeclared();
+    }
+
+    public int getWinDay() {
+        return config.winDay();
+    }
+
+    public int currentDay() {
+        if (!data.isStarted()) {
+            return 0;
+        }
+        long elapsed = data.isPaused() ? data.getPausedElapsed() : elapsedNow();
+        return (int) (elapsed / TICKS_PER_DAY) + data.getStartDay();
+    }
+
+    private long elapsedNow() {
+        World overworld = Worlds.overworld();
+        long full = overworld == null ? data.getStartFullTime() : overworld.getFullTime();
+        return Math.max(0L, full - data.getStartFullTime());
+    }
+
     private void tick() {
         if (!data.isStarted()) {
             showToAll(Component.text("DragonEggSV — /DE start 로 시작", NamedTextColor.GRAY), 0f);
             return;
         }
 
-        World overworld = Worlds.overworld();
-        if (overworld == null) {
-            return;
-        }
-
-        long elapsed = Math.max(0L, overworld.getFullTime() - data.getStartFullTime());
+        boolean paused = data.isPaused();
+        long elapsed = paused ? data.getPausedElapsed() : elapsedNow();
         int day = (int) (elapsed / TICKS_PER_DAY) + data.getStartDay();
         int winDay = config.winDay();
         float progress = clamp01((elapsed % TICKS_PER_DAY) / (float) TICKS_PER_DAY);
 
-        showToAll(Component.text("🥚 Day " + day + " / " + winDay, NamedTextColor.LIGHT_PURPLE), progress);
+        Component title = Component.text(
+                (paused ? "⏸ " : "🥚 ") + "Day " + day + " / " + winDay, NamedTextColor.LIGHT_PURPLE);
+        showToAll(title, progress);
 
-        if (!data.isWinDeclared() && day >= winDay) {
+        if (!paused && !data.isWinDeclared() && day >= winDay) {
             resolveWin();
         }
     }
