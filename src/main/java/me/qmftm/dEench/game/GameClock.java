@@ -13,6 +13,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 /**
  * Tracks elapsed MC days from an explicit start point ({@code /DE start}),
@@ -23,6 +25,7 @@ import org.bukkit.entity.Player;
 public class GameClock {
 
     private static final long TICKS_PER_DAY = 24000L;
+    private static final double DRAGON_SPEED = 0.8;
 
     private final DEench plugin;
     private final DataStore data;
@@ -180,11 +183,30 @@ public class GameClock {
         EnderDragon dragon = overworld.spawn(spawn.clone().add(0, 5, 0), EnderDragon.class, d -> {
             d.setInvulnerable(true);
             d.setRemoveWhenFarAway(false);
+            d.setAI(false);      // disable its own flight so the winner steers it
+            d.setGravity(false);
             d.setPhase(EnderDragon.Phase.HOVER);
             d.customName(Component.text("👑 " + winner.getName(), NamedTextColor.GOLD));
             d.setCustomNameVisible(true);
         });
         dragon.addPassenger(winner);
+        steerDragon(dragon, winner);
+    }
+
+    /** Fly the victory dragon in the direction its rider is looking. */
+    private void steerDragon(EnderDragon dragon, Player winner) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!dragon.isValid() || !winner.isOnline() || !dragon.getPassengers().contains(winner)) {
+                    cancel();
+                    return;
+                }
+                Vector direction = winner.getLocation().getDirection().multiply(DRAGON_SPEED);
+                dragon.setVelocity(direction);
+                dragon.setRotation(winner.getLocation().getYaw(), 0f);
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
     }
 
     private void showToAll(Component name, float progress) {
