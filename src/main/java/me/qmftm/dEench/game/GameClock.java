@@ -9,7 +9,9 @@ import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 
 /**
@@ -152,6 +154,7 @@ public class GameClock {
             Bukkit.getServer().sendMessage(Component.text(
                     "🐉 " + holder.getName() + " wins DragonEggSV — they hold the dragon egg!",
                     NamedTextColor.GOLD));
+            winCeremony(holder);
         } else if (!data.isWinDeferAnnounced()) {
             data.setWinDeferAnnounced(true);
             data.save();
@@ -160,6 +163,28 @@ public class GameClock {
                             + "The next player to obtain it wins!",
                     NamedTextColor.GOLD));
         }
+    }
+
+    /** Teleport everyone to spawn and seat the winner on a victory dragon. */
+    private void winCeremony(Player winner) {
+        World overworld = Worlds.overworld();
+        if (overworld == null) {
+            return;
+        }
+        Location spawn = overworld.getSpawnLocation();
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.teleport(spawn);
+        }
+
+        EnderDragon dragon = overworld.spawn(spawn.clone().add(0, 5, 0), EnderDragon.class, d -> {
+            d.setInvulnerable(true);
+            d.setRemoveWhenFarAway(false);
+            d.setPhase(EnderDragon.Phase.HOVER);
+            d.customName(Component.text("👑 " + winner.getName(), NamedTextColor.GOLD));
+            d.setCustomNameVisible(true);
+        });
+        dragon.addPassenger(winner);
     }
 
     private void showToAll(Component name, float progress) {
