@@ -1,6 +1,12 @@
 name: Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag to create
+        required: true
+        default: v0.1.0
   push:
     tags:
       - 'v*'
@@ -28,7 +34,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
+          TAG="${{ github.event.inputs.version }}"
+          if [ -z "$TAG" ]; then TAG="${GITHUB_REF_NAME}"; fi
+          gh release create "$TAG" \
             target/DEench-0.1.0.jar \
-            --title "DEench ${GITHUB_REF_NAME}" \
-            --notes "DragonEggSV plugin build ${GITHUB_REF_NAME}, built against Paper 1.21.8."
+            --target "${GITHUB_SHA}" \
+            --title "DEench ${TAG}" \
+            --notes "DragonEggSV plugin build ${TAG}, built against Paper 1.21.8."
